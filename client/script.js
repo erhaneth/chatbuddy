@@ -22,7 +22,7 @@ function typeText(element, text) {
 
   let interval = setInterval(() => {
     if (i < text.length) {
-      element.innerHTML += text.chartAt(i);
+      element.innerHTML += text.charAt(i);
       i++;
     } else {
       clearInterval(interval);
@@ -42,7 +42,7 @@ function chatStripe(isAi, value, uniqueId) {
   return `
     <div class="wrapper ${isAi && "ai"}">
       <div class="chat">
-        <div className="profile">
+        <div class="profile">
           <img src="${isAi ? bot : user}" 
                alt="${isAi ? "bot" : "user"}"  
           />
@@ -73,6 +73,31 @@ const handleSubmit = async (e) => {
   const messageDiv = document.getElementById(uniqueId);
 
   loader(messageDiv);
+
+  //fetch data from server --> bot's response
+  const response = await fetch("http://localhost:5555", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: data.get("prompt"),
+    }),
+  });
+  clearInterval(loadInterval);
+  messageDiv.innerHTML = "";
+
+  if (response.ok) {
+    const data = await response.json();
+    const parsedData = data.bot.trim();
+
+    typeText(messageDiv, parsedData);
+  } else {
+    const err = await response.text();
+    messageDiv.innerHTML = "Something went wrong";
+
+    alert(err);
+  }
 };
 
 form.addEventListener("submit", handleSubmit);
